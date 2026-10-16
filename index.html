@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>じゃんけん＆あっち向いてホイ！</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        
+        .score-board {
+            font-size: 1.2rem;
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .result-area {
+            min-height: 150px;
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        #message {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+
+        /* コンピュータの手のアニメーション */
+        #computer-choice {
+            font-size: 4rem; /* 絵文字を大きく */
+            display: inline-block;
+        }
+        .pop-animation {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .button-area {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            font-size: 1.5rem;
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        .action-btn:active { transform: scale(0.95); }
+        
+        /* じゃんけんボタンの色 */
+        .janken-btn { background-color: #3498db; }
+        .janken-btn:hover { background-color: #2980b9; }
+        
+        /* 方向ボタンの色 */
+        .direction-btn { background-color: #27ae60; }
+        .direction-btn:hover { background-color: #2ecc71; }
+
+        /* 非表示用クラス */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <h1>じゃんけん＆あっち向いてホイ！</h1>
+
+    <div class="score-board">
+        <span id="win-count">0</span>勝 
+        <span id="lose-count">0</span>敗
+    </div>
+
+    <div class="result-area">
+        <div id="message">最初はグー、じゃんけん...</div>
+        <div id="computer-choice">❔</div>
+    </div>
+
+    <!-- じゃんけん用のボタン -->
+    <div id="janken-buttons" class="button-area">
+        <button class="action-btn janken-btn" onclick="playJanken('グー')">✊ グー</button>
+        <button class="action-btn janken-btn" onclick="playJanken('チョキ')">✌️ チョキ</button>
+        <button class="action-btn janken-btn" onclick="playJanken('パー')">✋ パー</button>
+    </div>
+
+    <!-- あっち向いてホイ用のボタン（最初は非表示） -->
+    <div id="hoi-buttons" class="button-area hidden">
+        <button class="action-btn direction-btn" onclick="playHoi('上')">👆 上</button>
+        <button class="action-btn direction-btn" onclick="playHoi('下')">👇 下</button>
+        <button class="action-btn direction-btn" onclick="playHoi('左')">👈 左</button>
+        <button class="action-btn direction-btn" onclick="playHoi('右')">👉 右</button>
+    </div>
+
+    <script>
+        let wins = 0;
+        let losses = 0;
+        let currentWinner = ''; // じゃんけんの勝者（'user' または 'computer'）
+
+        const jankenArea = document.getElementById('janken-buttons');
+        const hoiArea = document.getElementById('hoi-buttons');
+        const messageEl = document.getElementById('message');
+        const compChoiceEl = document.getElementById('computer-choice');
+
+        // アニメーションを再実行するための関数
+        function triggerAnimation(element, emoji) {
+            element.classList.remove('pop-animation');
+            void element.offsetWidth; // アニメーションをリセットする魔法のコード
+            element.innerText = emoji;
+            element.classList.add('pop-animation');
+        }
+
+        // 第1フェーズ：じゃんけん
+        function playJanken(userChoice) {
+            const choices = ['グー', 'チョキ', 'パー'];
+            const emojis = {'グー': '✊', 'チョキ': '✌️', 'パー': '✋'};
+            const compChoice = choices[Math.floor(Math.random() * choices.length)];
+            
+            triggerAnimation(compChoiceEl, emojis[compChoice]);
+
+            if (userChoice === compChoice) {
+                messageEl.innerText = 'あいこで... しょ！';
+            } else if (
+                (userChoice === 'グー' && compChoice === 'チョキ') ||
+                (userChoice === 'チョキ' && compChoice === 'パー') ||
+                (userChoice === 'パー' && compChoice === 'グー')
+            ) {
+                currentWinner = 'user';
+                messageEl.innerText = 'あなたの勝ち！あっちむいて...';
+                switchToHoi(); // ホイのボタンに切り替え
+            } else {
+                currentWinner = 'computer';
+                messageEl.innerText = 'あなたの負け！あっちむいて...';
+                switchToHoi(); // ホイのボタンに切り替え
+            }
+        }
+
+        // ボタンの表示切り替え（じゃんけん → ホイ）
+        function switchToHoi() {
+            jankenArea.classList.add('hidden');
+            hoiArea.classList.remove('hidden');
+        }
+
+        // 第2フェーズ：あっち向いてホイ
+        function playHoi(userDirection) {
+            const directions = ['上', '下', '左', '右'];
+            const emojis = {'上': '👆', '下': '👇', '左': '👈', '右': '👉'};
+            const compDirection = directions[Math.floor(Math.random() * directions.length)];
+
+            triggerAnimation(compChoiceEl, emojis[compDirection]);
+
+            if (userDirection === compDirection) {
+                // 方向が一致した場合（じゃんけんの勝者が完全に勝利）
+                if (currentWinner === 'user') {
+                    messageEl.innerText = '大勝利！🎉 もう一回じゃんけん...';
+                    wins++;
+                } else {
+                    messageEl.innerText = '残念、負け... 😢 もう一回じゃんけん...';
+                    losses++;
+                }
+                updateScore();
+            } else {
+                // 方向が外れた場合（セーフ）
+                messageEl.innerText = 'セーフ！もう一回じゃんけん...';
+            }
+
+            // じゃんけんボタンに戻す
+            setTimeout(() => {
+                hoiArea.classList.add('hidden');
+                jankenArea.classList.remove('hidden');
+            }, 1000); // 1秒だけ結果を見せてから戻る
+        }
+
+        // スコア更新
+        function updateScore() {
+            document.getElementById('win-count').innerText = wins;
+            document.getElementById('lose-count').innerText = losses;
+        }
+    </script>
+</body>
+</html>
